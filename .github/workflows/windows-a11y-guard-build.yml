@@ -1,0 +1,39 @@
+name: Windows build (a11y guard, fork only)
+on:
+  push:
+    branches:
+      - fix/windows-a11y-crash
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: "3.47.9"
+          cache: false
+      - run: flutter config --enable-windows-desktop
+      - run: flutter pub get
+        working-directory: apps/mobile
+      - run: flutter build windows --release
+        working-directory: apps/mobile
+      - name: Smoke launch with the guard enabled
+        shell: pwsh
+        env:
+          CCPOCKET_DISABLE_ACCESSIBILITY: "1"
+        run: |
+          $exe = "apps/mobile/build/windows/x64/runner/Release/ccpocket.exe"
+          $p = Start-Process -FilePath $exe -PassThru
+          Start-Sleep -Seconds 20
+          if ($p.HasExited) { Write-Error "exited early: $($p.ExitCode)"; exit 1 }
+          Stop-Process -Id $p.Id -Force
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: CC-Pocket-windows-x64-a11y-guard
+          path: apps/mobile/build/windows/x64/runner/Release/
+          retention-days: 14
