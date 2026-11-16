@@ -24,11 +24,14 @@ Future<void> _pumpHost(WidgetTester tester, {required Widget content}) async {
   );
 }
 
-void main() {
-  tearDown(() => debugDefaultTargetPlatformOverride = null);
+Size _dialogBodySize(WidgetTester tester) => tester.getSize(
+  find
+      .descendant(of: find.byType(Dialog), matching: find.byType(Material))
+      .first,
+);
 
+void main() {
   testWidgets('uses a bottom sheet outside Windows', (tester) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.android;
     await _pumpHost(tester, content: const Text('content'));
 
     await tester.tap(find.text('open'));
@@ -37,10 +40,9 @@ void main() {
     expect(find.byType(BottomSheet), findsOneWidget);
     expect(find.byType(Dialog), findsNothing);
     expect(find.text('content'), findsOneWidget);
-  });
+  }, variant: TargetPlatformVariant.only(TargetPlatform.android));
 
   testWidgets('uses a width-bounded dialog on Windows', (tester) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
     tester.view.physicalSize = const Size(1600, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -53,13 +55,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(BottomSheet), findsNothing);
-    final dialogSize = tester.getSize(find.byType(Dialog));
+    final dialogSize = _dialogBodySize(tester);
     expect(dialogSize.width, kDesktopSheetDialogMaxWidth);
     expect(find.text('content'), findsOneWidget);
-  });
+  }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
 
   testWidgets('shrinks inside a narrow Windows window', (tester) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
     tester.view.physicalSize = const Size(400, 700);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -68,12 +69,11 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
-    final dialogSize = tester.getSize(find.byType(Dialog));
+    final dialogSize = _dialogBodySize(tester);
     expect(dialogSize.width, 400 - 2 * kDesktopSheetDialogMargin);
-  });
+  }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
 
   testWidgets('scrolls tall content in a short Windows window', (tester) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
     tester.view.physicalSize = const Size(1000, 360);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -93,15 +93,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    final dialogSize = tester.getSize(find.byType(Dialog));
+    final dialogSize = _dialogBodySize(tester);
     expect(
       dialogSize.height,
       lessThanOrEqualTo(360 - 2 * kDesktopSheetDialogMargin),
     );
-  });
+  }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
 
   testWidgets('Escape closes the Windows dialog', (tester) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
     await _pumpHost(tester, content: const Text('content'));
 
     await tester.tap(find.text('open'));
@@ -112,5 +111,5 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(Dialog), findsNothing);
-  });
+  }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
 }
