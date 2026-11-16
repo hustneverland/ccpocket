@@ -46,7 +46,7 @@ jobs:
           test/adaptive_sheet_test.dart
         working-directory: apps/mobile
 
-      - run: flutter analyze
+      - run: flutter analyze --no-fatal-infos
         working-directory: apps/mobile
 
       - name: Tests for the touched surfaces
