@@ -1,0 +1,76 @@
+name: Windows desktop polish build (fork only)
+on:
+  push:
+    branches:
+      - feat/windows-desktop-polish
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  check-and-build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Read Flutter version from .mise.toml
+        id: mise
+        shell: pwsh
+        run: |
+          $mise = Get-Content .mise.toml -Raw
+          if ($mise -notmatch 'flutter\s*=\s*"([^"]+)"') {
+            Write-Error "Could not read Flutter version from .mise.toml"
+            exit 1
+          }
+          "flutter_version=$($Matches[1])" >> $env:GITHUB_OUTPUT
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ steps.mise.outputs.flutter_version }}
+          cache: false
+
+      - run: flutter config --enable-windows-desktop
+      - run: flutter pub get
+        working-directory: apps/mobile
+
+      - name: Format check on changed files
+        run: >
+          dart format --output=none --set-exit-if-changed
+          lib/widgets/adaptive_sheet.dart
+          lib/widgets/claude_settings_panel.dart
+          lib/features/chat_session/widgets/session_mode_bar.dart
+          lib/features/chat_session/widgets/codex_settings_sheet.dart
+          lib/utils/platform_helper_io.dart
+          lib/utils/platform_helper_stub.dart
+          test/adaptive_sheet_test.dart
+        working-directory: apps/mobile
+
+      - run: flutter analyze
+        working-directory: apps/mobile
+
+      - name: Tests for the touched surfaces
+        run: >
+          flutter test
+          test/adaptive_sheet_test.dart
+          test/session_mode_bar_test.dart
+          test/codex_speed_picker_test.dart
+        working-directory: apps/mobile
+
+      - run: flutter build windows --release
+        working-directory: apps/mobile
+
+      - name: Smoke launch
+        shell: pwsh
+        run: |
+          $exe = "apps/mobile/build/windows/x64/runner/Release/ccpocket.exe"
+          $p = Start-Process -FilePath $exe -PassThru
+          Start-Sleep -Seconds 20
+          if ($p.HasExited) { Write-Error "exited early: $($p.ExitCode)"; exit 1 }
+          Stop-Process -Id $p.Id -Force
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: CC-Pocket-windows-x64-desktop-polish
+          path: apps/mobile/build/windows/x64/runner/Release/
+          retention-days: 14
