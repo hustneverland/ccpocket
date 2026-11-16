@@ -12,6 +12,7 @@ import '../../../widgets/codex_effort_slider.dart';
 import '../state/chat_session_state.dart';
 import '../state/chat_session_cubit.dart';
 import 'codex_settings_sheet.dart';
+import '../../../widgets/adaptive_sheet.dart';
 
 class SessionModeBar extends StatelessWidget {
   final Future<void> Function()? onBeforeRestart;
@@ -419,7 +420,7 @@ void showCodexModelMenu(
       model: _codexReasoningEffortsForModel(context, model),
   };
 
-  showModalBottomSheet<void>(
+  showAdaptiveSheet<void>(
     context: context,
     isScrollControlled: true,
     builder: (_) => StreamBuilder<void>(
@@ -462,7 +463,7 @@ List<ClaudeModelOption> _claudeModelOptions(ChatSessionCubit chatCubit) {
 
 void showClaudeSettingsMenu(BuildContext context, ChatSessionCubit chatCubit) {
   final options = _claudeModelOptions(chatCubit);
-  showModalBottomSheet<void>(
+  showAdaptiveSheet<void>(
     context: context,
     isScrollControlled: true,
     // Rebuild with the Bridge's confirmed settings so a rejected change
@@ -508,7 +509,7 @@ void showCodexPermissionsMenu(
   }
   final currentMode = chatCubit.state.codexPermissionsMode;
 
-  showModalBottomSheet(
+  showAdaptiveSheet(
     context: context,
     builder: (sheetContext) {
       final sheetCs = Theme.of(sheetContext).colorScheme;
@@ -674,7 +675,7 @@ void showSandboxModeMenu(
   final isClaude = chatCubit.provider != Provider.codex;
   final l = AppLocalizations.of(context);
 
-  showModalBottomSheet(
+  showAdaptiveSheet(
     context: context,
     builder: (sheetContext) {
       final sheetCs = Theme.of(sheetContext).colorScheme;
@@ -867,7 +868,7 @@ void showPermissionModeMenu(
         ),
       };
 
-  showModalBottomSheet(
+  showAdaptiveSheet(
     context: context,
     builder: (sheetContext) {
       final sheetCs = Theme.of(sheetContext).colorScheme;

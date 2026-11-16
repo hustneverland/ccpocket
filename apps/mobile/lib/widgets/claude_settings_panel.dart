@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/messages.dart';
+import 'adaptive_sheet.dart';
 import 'codex_effort_slider.dart';
 
 /// Fallback Claude models when the Bridge has not delivered a list yet.
@@ -305,7 +306,7 @@ class _ClaudeSettingsPanelState extends State<ClaudeSettingsPanel> {
     required String Function(T) optionKey,
     required ValueChanged<T> onSelected,
   }) {
-    showModalBottomSheet<void>(
+    showAdaptiveSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (sheetContext) => SafeArea(

@@ -32,6 +32,10 @@ bool get isMobilePlatform => _runsAs(const {
 bool get isMacOSPlatform =>
     _runsAs(const {TargetPlatform.macOS}, Platform.isMacOS);
 
+/// Whether the app runs as Windows.
+bool get isWindowsPlatform =>
+    _runsAs(const {TargetPlatform.windows}, Platform.isWindows);
+
 /// Whether the app runs as iOS.
 bool get isIOSPlatform => _runsAs(const {TargetPlatform.iOS}, Platform.isIOS);
 

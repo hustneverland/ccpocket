@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../models/messages.dart';
+import '../../../widgets/adaptive_sheet.dart';
 import '../../../widgets/codex_effort_slider.dart';
 
 class CodexSettingsSheet extends StatefulWidget {
@@ -215,7 +216,7 @@ class _CodexSettingsSheetState extends State<CodexSettingsSheet> {
     String? Function(T)? subtitle,
     required ValueChanged<T> onSelected,
   }) {
-    showModalBottomSheet<void>(
+    showAdaptiveSheet<void>(
       context: context,
       builder: (sheetContext) => SafeArea(
         child: Column(

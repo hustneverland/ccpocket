@@ -12,6 +12,9 @@ bool get isMobilePlatform => false;
 /// Whether the current platform is macOS.
 bool get isMacOSPlatform => false;
 
+/// Whether the current platform is Windows. False on Web.
+bool get isWindowsPlatform => false;
+
 /// Whether the current platform is iOS.
 bool get isIOSPlatform => false;
 
