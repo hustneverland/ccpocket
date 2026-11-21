@@ -46,7 +46,9 @@ MarkdownLinkTarget classifyMarkdownLink(
   if (raw.isEmpty) return const MarkdownLinkTarget.unsupported('');
 
   if (_windowsAbsolutePath.hasMatch(raw) || raw.startsWith(r'\\')) {
-    return MarkdownLinkTarget.file(raw);
+    // Markdown percent-encodes non-ASCII characters in link destinations, so
+    // decode Windows paths the same way as the other path forms below.
+    return MarkdownLinkTarget.file(_decodePercentEncoding(raw));
   }
 
   final uri = Uri.tryParse(raw);
@@ -203,6 +205,17 @@ bool _looksLikeFilePath(String path) {
   if (path.isEmpty || !path.contains(RegExp(r'[/\\]'))) return false;
   final name = path.split(RegExp(r'[/\\]')).last;
   return name.isEmpty || name != '.' && name != '..';
+}
+
+/// Leaves the path unchanged when it holds a `%` that is not an escape.
+String _decodePercentEncoding(String path) {
+  try {
+    return Uri.decodeComponent(path);
+  } on ArgumentError {
+    return path;
+  } on FormatException {
+    return path;
+  }
 }
 
 String _stripLineColumn(String path) {

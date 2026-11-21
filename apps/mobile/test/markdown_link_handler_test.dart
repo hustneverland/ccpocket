@@ -34,6 +34,23 @@ void main() {
       expect(windows.value, r'C:\work\report.md:42');
     });
 
+    test('decodes percent-encoded non-ASCII Windows paths', () {
+      final forward = classifyMarkdownLink(
+        'D:/%E5%BC%80%E5%8F%91/tasks/context.md',
+      );
+      final backslash = classifyMarkdownLink(
+        r'D:\%E5%BC%80%E5%8F%91\tasks\context.md:3',
+      );
+      final unc = classifyMarkdownLink(r'\\server\%E5%85%B1%E4%BA%AB\a.md');
+      final literalPercent = classifyMarkdownLink(r'C:\work\100%.md');
+
+      expect(forward.kind, MarkdownLinkTargetKind.file);
+      expect(forward.value, 'D:/开发/tasks/context.md');
+      expect(backslash.value, r'D:\开发\tasks\context.md:3');
+      expect(unc.value, r'\\server\共享\a.md');
+      expect(literalPercent.value, r'C:\work\100%.md');
+    });
+
     test('classifies file URIs and relative file paths as files', () {
       final fileUri = classifyMarkdownLink('file:///Users/example/report.md');
       final fileUriWithPosition = classifyMarkdownLink(
@@ -91,6 +108,27 @@ void main() {
     );
 
     await tester.tap(find.text('評価レポート'));
+    await tester.pump();
+
+    expect(openedPath, path);
+  });
+
+  testWidgets('Windows markdown link with a non-ASCII path opens File Peek', (
+    tester,
+  ) async {
+    const path = 'D:/开发项目/tasks/隧道连接/context.md';
+    String? openedPath;
+
+    await tester.pumpWidget(
+      _wrap(
+        AssistantBubble(
+          message: _messageWithText('[上下文]($path)'),
+          onFileTap: (path) => openedPath = path,
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('上下文'));
     await tester.pump();
 
     expect(openedPath, path);
