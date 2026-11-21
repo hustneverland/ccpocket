@@ -6,7 +6,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
     <application
-        android:label="CC Pocket"
+        android:label="CC Pocket Dev"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <meta-data android:name="io.flutter.embedding.android.EnableFlutterGPU" android:value="true" />
@@ -58,7 +58,7 @@
             android:enabled="true"
             android:exported="true"
             android:icon="@mipmap/launcher_icon"
-            android:label="CC Pocket"
+            android:label="CC Pocket Dev"
             android:theme="@style/LaunchTheme"
             android:targetActivity=".MainActivity">
             <intent-filter>
@@ -71,7 +71,7 @@
             android:enabled="false"
             android:exported="true"
             android:icon="@mipmap/ic_launcher_supporter_light_outline"
-            android:label="CC Pocket"
+            android:label="CC Pocket Dev"
             android:theme="@style/LaunchTheme"
             android:targetActivity=".MainActivity">
             <intent-filter>
@@ -84,7 +84,7 @@
             android:enabled="false"
             android:exported="true"
             android:icon="@mipmap/ic_launcher_supporter_pro_copper_emerald"
-            android:label="CC Pocket"
+            android:label="CC Pocket Dev"
             android:theme="@style/LaunchTheme"
             android:targetActivity=".MainActivity">
             <intent-filter>
@@ -117,7 +117,7 @@
         </receiver>
         <provider
             android:name="com.superlist.super_native_extensions.DataProvider"
-            android:authorities="com.k9i.ccpocket.SuperClipboardDataProvider"
+            android:authorities="com.k9i.ccpocket.dev.SuperClipboardDataProvider"
             android:exported="true"
             android:grantUriPermissions="true" />
     </application>

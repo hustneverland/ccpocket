@@ -17,7 +17,7 @@ if (!googleServicesFile.exists()) {
       "client_info": {
         "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
         "android_client_info": {
-          "package_name": "com.k9i.ccpocket"
+          "package_name": "com.k9i.ccpocket.dev"
         }
       },
       "api_key": [
@@ -62,7 +62,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.k9i.ccpocket"
+        applicationId = "com.k9i.ccpocket.dev"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

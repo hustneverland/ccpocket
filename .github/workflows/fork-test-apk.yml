@@ -1,0 +1,46 @@
+name: Fork test APK - SSH tunnel fixes (fork only)
+on:
+  push:
+    branches:
+      - test-build/ssh-tunnel-fixes
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Read Flutter version from .mise.toml
+        id: mise
+        run: echo "flutter_version=$(grep 'flutter' .mise.toml | sed 's/.*= *\"//' | sed 's/\"//')" >> "$GITHUB_OUTPUT"
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ steps.mise.outputs.flutter_version }}
+          cache: true
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install Android NDK
+        run: |
+          SDKMANAGER="${ANDROID_HOME:?}/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses > /dev/null
+          "$SDKMANAGER" "ndk;29.0.13846066"
+      - uses: gradle/gradle-build-action@ac2d340dc04d9e1113182899e983b5400c17cda1 # v3.5.0
+      - name: Use precompiled Rust artifacts
+        run: |
+          printf '%s\n' 'use_precompiled_binaries: true' > apps/mobile/cargokit_options.yaml
+      - run: flutter pub get
+        working-directory: apps/mobile
+      - name: Build test APK (debug-signed, package com.k9i.ccpocket.dev)
+        working-directory: apps/mobile
+        run: flutter build apk --release --target-platform android-arm64
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ccpocket-dev-ssh-tunnel-fixes-arm64
+          path: apps/mobile/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 14
