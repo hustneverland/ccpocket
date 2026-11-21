@@ -1,0 +1,83 @@
+name: Fork check - SSH tunnel redial (fork only)
+on:
+  push:
+    branches:
+      - ci/ssh-tunnel-redial-check
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Read Flutter version from .mise.toml
+        id: mise
+        run: echo "flutter_version=$(grep 'flutter' .mise.toml | sed 's/.*= *\"//' | sed 's/\"//')" >> "$GITHUB_OUTPUT"
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ steps.mise.outputs.flutter_version }}
+          cache: true
+      - run: flutter pub get
+        working-directory: apps/mobile
+      - name: Format check (changed files)
+        working-directory: apps/mobile
+        run: |
+          dart format lib/services/ssh_bridge_tunnel_service.dart test/ssh_bridge_tunnel_smoke_test.dart
+          git --no-pager diff
+          git diff --quiet
+      - run: dart analyze .
+        working-directory: apps/mobile
+      - name: Start SSH jump smoke containers
+        run: docker compose -f tools/ssh-jump-smoke/docker-compose.yml up -d --build
+      - name: Wait for SSH jump host
+        run: |
+          for _ in {1..30}; do
+            nc -z 127.0.0.1 22220 && exit 0
+            sleep 1
+          done
+          docker compose -f tools/ssh-jump-smoke/docker-compose.yml logs
+          exit 1
+      - name: SSH Bridge tunnel smoke test (with the fix)
+        run: flutter test test/ssh_bridge_tunnel_smoke_test.dart
+        working-directory: apps/mobile
+        env:
+          CCPOCKET_SSH_BRIDGE_TUNNEL_SMOKE: "1"
+          CCPOCKET_BRIDGE_TARGET_HOST: target-sshd
+          CCPOCKET_BRIDGE_TARGET_PORT: "8765"
+          CCPOCKET_SSH_JUMP_HOST: 127.0.0.1
+          CCPOCKET_SSH_JUMP_PORT: "22220"
+          CCPOCKET_SSH_USERNAME: ccpocket
+          CCPOCKET_SSH_PASSWORD: ccpocket
+      - name: Control - same smoke test with the redial disabled must fail
+        working-directory: apps/mobile
+        env:
+          CCPOCKET_SSH_BRIDGE_TUNNEL_SMOKE: "1"
+          CCPOCKET_BRIDGE_TARGET_HOST: target-sshd
+          CCPOCKET_BRIDGE_TARGET_PORT: "8765"
+          CCPOCKET_SSH_JUMP_HOST: 127.0.0.1
+          CCPOCKET_SSH_JUMP_PORT: "22220"
+          CCPOCKET_SSH_USERNAME: ccpocket
+          CCPOCKET_SSH_PASSWORD: ccpocket
+        run: |
+          sed -i 's/    final fresh = await _replaceJumpClient(client);/    throw StateError("redial disabled for control run");\n    final fresh = await _replaceJumpClient(client);/' lib/services/ssh_bridge_tunnel_service.dart
+          grep -n "redial disabled for control run" lib/services/ssh_bridge_tunnel_service.dart
+          if flutter test test/ssh_bridge_tunnel_smoke_test.dart; then
+            echo "Control run unexpectedly passed"
+            exit 1
+          fi
+          echo "Control run failed as expected"
+          git checkout -- lib/services/ssh_bridge_tunnel_service.dart
+      - name: Stalled jump host smoke test (docker pause)
+        run: flutter test test/ssh_tunnel_stall_smoke_test.dart
+        working-directory: apps/mobile
+        env:
+          CCPOCKET_SSH_TUNNEL_STALL_SMOKE: "1"
+      - name: Stop SSH jump smoke containers
+        if: always()
+        run: docker compose -f tools/ssh-jump-smoke/docker-compose.yml down -v
+      - name: Full mobile test suite
+        working-directory: apps/mobile
+        run: flutter test
